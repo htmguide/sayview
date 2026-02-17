@@ -3,43 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sayVIEW | Свободная Платформа</title>
+    <title>sayVIEW | OFFICIAL</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #ff0000; --bg: #000; --surface: #0f0f0f; --border: #222; --text-gray: #888; }
+        :root { --accent: #ff0000; --bg: #000; --surface: #0f0f0f; --border: #222; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding-top: 80px; }
-        
-        header { 
-            position: fixed; top: 0; width: 100%; height: 70px; background: #000;
-            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; 
-            align-items: center; padding: 0 25px; z-index: 1000; box-sizing: border-box;
-        }
+        header { position: fixed; top: 0; width: 100%; height: 70px; background: #000; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 25px; z-index: 1000; box-sizing: border-box; }
         .logo { font-family: 'Dela Gothic One'; font-size: 26px; text-decoration: none; color: #fff; }
         .logo span { color: var(--accent); }
-
         .search-box { flex: 0.4; display: flex; background: #111; border: 1px solid #333; border-radius: 20px; padding: 5px 15px; align-items: center; }
         .search-box input { background: transparent; border: none; color: #fff; padding: 8px; width: 100%; outline: none; }
-
         .nav-btns { display: flex; gap: 15px; align-items: center; }
         .btn-auth { color: #fff; background: transparent; border: 1px solid #333; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: 700; }
         .btn-upload { background: #fff; color: #000; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 900; cursor: pointer; }
-
         .content { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .video-card { cursor: pointer; text-decoration: none; color: #fff; transition: 0.2s; }
+        .video-card { cursor: pointer; border-radius: 12px; overflow: hidden; transition: 0.2s; background: var(--surface); border: 1px solid var(--border); padding-bottom: 10px; }
         .video-card:hover { transform: scale(1.02); }
-        .thumb { width: 100%; aspect-ratio: 16/9; background: #111; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-        .thumb img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .v-meta { display: flex; gap: 12px; margin-top: 12px; }
-        .v-avatar { width: 36px; height: 36px; border-radius: 50%; background: #222; background-size: cover; background-position: center; flex-shrink: 0; }
-        .v-details h3 { margin: 0; font-size: 15px; line-height: 1.3; }
-        .v-details p { margin: 5px 0 0; font-size: 12px; color: #888; }
-
+        .thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+        .v-meta { padding: 10px; display: flex; gap: 10px; }
+        .v-avatar { width: 35px; height: 35px; border-radius: 50%; background: #333; background-size: cover; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--surface); padding: 30px; border-radius: 20px; width: 350px; border: 1px solid var(--border); }
+        .modal-content { background: var(--surface); padding: 30px; border-radius: 20px; width: 320px; border: 1px solid var(--border); }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
         .m-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; }
     </style>
@@ -49,7 +36,6 @@
 <header>
     <a href="index.html" class="logo">say<span>VIEW</span></a>
     <div class="search-box">
-        <i class="fas fa-search" style="color: #444;"></i>
         <input type="text" id="searchInput" placeholder="Поиск видео..." oninput="filterVideos()">
     </div>
     <div class="nav-btns" id="auth-box">
@@ -58,130 +44,134 @@
 </header>
 
 <div class="content">
-    <div class="video-grid" id="feed">
-        <p id="loading-status">Загрузка ленты...</p>
-    </div>
+    <div class="video-grid" id="feed"></div>
 </div>
 
 <div id="auth-modal" class="modal">
     <div class="modal-content">
-        <h2 style="font-family:'Dela Gothic One'; margin:0 0 15px 0;">SAY IN.</h2>
+        <h2 style="font-family:'Dela Gothic One'">SAY IN</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="pass" placeholder="Password">
-        <button class="m-btn" onclick="handleAuth()">ПРОДОЛЖИТЬ</button>
-        <p style="font-size: 10px; color: #555; text-align: center; margin-top: 10px;">Если нет аккаунта, он создастся автоматом</p>
+        <button class="m-btn" id="authBtn">ПРОДОЛЖИТЬ</button>
     </div>
 </div>
 
 <div id="upload-modal" class="modal">
     <div class="modal-content">
-        <h2 style="font-family:'Dela Gothic One'; margin:0 0 15px 0;">UP VIDEO.</h2>
-        <input type="text" id="v-title" placeholder="Название видео">
+        <h2 style="font-family:'Dela Gothic One'">UP VIDEO</h2>
+        <input type="text" id="v-title" placeholder="Название">
         <input type="text" id="v-url" placeholder="Ссылка YouTube">
         <button class="m-btn" onclick="handleUpload()">ОПУБЛИКОВАТЬ</button>
-        <p style="font-size: 10px; color: #555; text-align: center; margin-top: 10px;">Лимит: 10 видео в день</p>
     </div>
 </div>
 
 <script>
-    // 1. ИНИЦИАЛИЗАЦИЯ
     const SUPABASE_URL = 'https://qoflnuxfovvvwespwtdp.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_0hXI7J8Q4SX66Hsy8TJkSw_jpUl8ps3';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let allVideos = []; // Для поиска
+    let allVideos = [];
 
-    // 2. АВТОРИЗАЦИЯ
-    async function handleAuth() {
+    // ОТКРЫТЬ МОДАЛКУ
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    // ЛОГИКА ВХОДА И РЕГИСТРАЦИИ
+    document.getElementById('authBtn').onclick = async () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('pass').value;
-        if (!email || !password) return alert("Заполни поля!");
 
-        const { data: signin, error: err1 } = await supabase.auth.signInWithPassword({ email, password });
-        if (err1) {
-            const { error: err2 } = await supabase.auth.signUp({ email, password });
-            if (err2) alert("Ошибка: " + err2.message);
-            else alert("Аккаунт создан! Обнови страницу.");
+        if (!email || !password) return alert("Бро, введи данные!");
+
+        // Пытаемся войти
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (signInError) {
+            console.log("Вход не удался, пробуем регистрацию...");
+            // Если не вошел — регистрируем
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+            
+            if (signUpError) {
+                alert("Ошибка регистрации: " + signUpError.message);
+            } else {
+                alert("Аккаунт создан! Проверь, вошел ли ты (если нет - нажми войти еще раз)");
+                location.reload();
+            }
         } else {
+            alert("Красава, ты вошел!");
             location.reload();
+        }
+    };
+
+    // ПРОВЕРКА СТАТУСА ЮЗЕРА
+    async function checkUser() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            let { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if (!profile) {
+                const nick = 'user' + Math.floor(Math.random()*999);
+                await supabase.from('profiles').insert([{ id: user.id, username: nick, display_name: nick }]);
+                location.reload();
+            }
+            document.getElementById('auth-box').innerHTML = `
+                <button class="btn-upload" onclick="openModal('upload-modal')">+ ЗАГРУЗИТЬ</button>
+                <div class="v-avatar" style="background-image:url(${profile.avatar_url})"></div>
+            `;
         }
     }
 
-    // 3. ЗАГРУЗКА
+    // ЗАГРУЗКА ВИДЕО
     async function handleUpload() {
         const title = document.getElementById('v-title').value;
         const url = document.getElementById('v-url').value;
         const vid = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-        if (!title || !vid) return alert("Проверь данные!");
-
+        
         const { data: { user } } = await supabase.auth.getUser();
 
-        // Лимит 10 видео
         const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { count } = await supabase.from('videos').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).gt('created_at', yesterday);
         
-        if (count >= 10) return alert("Лимит 10 видео в сутки!");
+        if (count >= 10) return alert("Лимит 10 видео в день!");
 
         const { error } = await supabase.from('videos').insert([{ owner_id: user.id, title, youtube_url: url, yt_video_id: vid }]);
-        if (error) alert(error.message); else location.reload();
+        if (error) alert("Ошибка: " + error.message); else location.reload();
     }
 
-    // 4. ОТОБРАЖЕНИЕ
+    // ЛЕНТА И ПОИСК
     async function loadFeed() {
         const { data: vids, error } = await supabase.from('videos').select('*, profiles(*)').order('created_at', {ascending: false});
-        if (error) return console.log(error);
-        
+        if (error) return;
         allVideos = vids;
-        renderVideos(allVideos);
+        render(allVideos);
     }
 
-    function renderVideos(list) {
+    function render(list) {
         const feed = document.getElementById('feed');
         feed.innerHTML = '';
-        if (list.length === 0) feed.innerHTML = '<p>Видео не найдены</p>';
-        
         list.forEach(v => {
             feed.innerHTML += `
                 <div class="video-card" onclick="location.href='watch.html?v=${v.id}'">
-                    <div class="thumb"><img src="https://img.youtube.com/vi/${v.yt_video_id}/maxresdefault.jpg"></div>
+                    <div class="thumb"><img src="https://img.youtube.com/vi/${v.yt_video_id}/mqdefault.jpg"></div>
                     <div class="v-meta">
-                        <div class="v-avatar" style="background-image:url(${v.profiles?.avatar_url || 'https://via.placeholder.com/100'})"></div>
-                        <div class="v-details">
-                            <h3>${v.title}</h3>
-                            <p>${v.profiles?.display_name || 'User'} • @${v.profiles?.username || 'nick'}</p>
+                        <div class="v-avatar" style="background-image:url(${v.profiles?.avatar_url})"></div>
+                        <div>
+                            <h3 style="margin:0; font-size:14px;">${v.title}</h3>
+                            <p style="margin:5px 0 0; font-size:12px; color:#888;">${v.profiles?.display_name}</p>
                         </div>
                     </div>
                 </div>`;
         });
     }
 
-    // 5. ПОИСК
     function filterVideos() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allVideos.filter(v => v.title.toLowerCase().includes(query));
-        renderVideos(filtered);
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        render(allVideos.filter(v => v.title.toLowerCase().includes(q)));
     }
 
-    // 6. СТАТУС ЮЗЕРА
-    supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session) {
-            const u = session.user;
-            let { data: p } = await supabase.from('profiles').select('*').eq('id', u.id).single();
-            if (!p) {
-                const nick = 'user' + Math.floor(Math.random()*9999);
-                await supabase.from('profiles').insert([{ id: u.id, username: nick, display_name: nick }]);
-                return location.reload();
-            }
-            document.getElementById('auth-box').innerHTML = `
-                <button class="btn-upload" onclick="openModal('upload-modal')">+ ЗАГРУЗИТЬ</button>
-                <a href="channel.html?u=${p.username}" class="v-avatar" style="background-image:url(${p.avatar_url})"></a>
-            `;
-        }
-    });
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     window.onclick = (e) => { if(e.target.className === 'modal') e.target.style.display='none'; }
     
+    checkUser();
     loadFeed();
 </script>
 </body>
