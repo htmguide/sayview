@@ -20,11 +20,10 @@
         .btn-upload { background: #fff; color: #000; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 900; cursor: pointer; }
         .content { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .video-card { cursor: pointer; border-radius: 12px; overflow: hidden; transition: 0.2s; background: var(--surface); border: 1px solid var(--border); padding-bottom: 10px; }
-        .video-card:hover { transform: scale(1.02); }
+        .video-card { cursor: pointer; border-radius: 12px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); padding-bottom: 10px; }
         .thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
         .v-meta { padding: 10px; display: flex; gap: 10px; }
-        .v-avatar { width: 35px; height: 35px; border-radius: 50%; background: #333; background-size: cover; }
+        .v-avatar { width: 35px; height: 35px; border-radius: 50%; background: #333; background-size: cover; background-position: center; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: var(--surface); padding: 30px; border-radius: 20px; width: 320px; border: 1px solid var(--border); }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
@@ -50,9 +49,9 @@
 <div id="auth-modal" class="modal">
     <div class="modal-content">
         <h2 style="font-family:'Dela Gothic One'">SAY IN</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="pass" placeholder="Password">
-        <button class="m-btn" id="authBtn">ПРОДОЛЖИТЬ</button>
+        <input type="email" id="emailInput" placeholder="Email">
+        <input type="password" id="passInput" placeholder="Пароль">
+        <button class="m-btn" onclick="authProcess()">ПРОДОЛЖИТЬ</button>
     </div>
 </div>
 
@@ -66,58 +65,44 @@
 </div>
 
 <script>
+    // Инициализация базы
     const SUPABASE_URL = 'https://qoflnuxfovvvwespwtdp.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_0hXI7J8Q4SX66Hsy8TJkSw_jpUl8ps3';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let allVideos = [];
 
-    // ОТКРЫТЬ МОДАЛКУ
     function openModal(id) {
         document.getElementById(id).style.display = 'flex';
     }
 
-    // ЛОГИКА ВХОДА И РЕГИСТРАЦИИ
-    document.getElementById('authBtn').onclick = async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('pass').value;
+    // ЛОГИКА АВТОРИЗАЦИИ (ОБНОВЛЕНА)
+    async function authProcess() {
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passInput').value;
 
-        if (!email || !password) return alert("Бро, введи данные!");
+        if (!email || !password) {
+            alert("Заполни все поля!");
+            return;
+        }
 
-        // Пытаемся войти
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        console.log("Пытаюсь зайти...");
 
-        if (signInError) {
-            console.log("Вход не удался, пробуем регистрацию...");
-            // Если не вошел — регистрируем
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+        // Сначала пробуем войти
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            console.log("Вход не вышел, пробуем создать аккаунт...");
+            const { data: upData, error: upError } = await supabase.auth.signUp({ email, password });
             
-            if (signUpError) {
-                alert("Ошибка регистрации: " + signUpError.message);
+            if (upError) {
+                alert("Ошибка: " + upError.message);
             } else {
-                alert("Аккаунт создан! Проверь, вошел ли ты (если нет - нажми войти еще раз)");
-                location.reload();
+                alert("Аккаунт создан! Попробуй нажать кнопку еще раз для входа.");
             }
         } else {
-            alert("Красава, ты вошел!");
+            alert("Ты в деле!");
             location.reload();
-        }
-    };
-
-    // ПРОВЕРКА СТАТУСА ЮЗЕРА
-    async function checkUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            let { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-            if (!profile) {
-                const nick = 'user' + Math.floor(Math.random()*999);
-                await supabase.from('profiles').insert([{ id: user.id, username: nick, display_name: nick }]);
-                location.reload();
-            }
-            document.getElementById('auth-box').innerHTML = `
-                <button class="btn-upload" onclick="openModal('upload-modal')">+ ЗАГРУЗИТЬ</button>
-                <div class="v-avatar" style="background-image:url(${profile.avatar_url})"></div>
-            `;
         }
     }
 
@@ -127,22 +112,29 @@
         const url = document.getElementById('v-url').value;
         const vid = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
         
+        if(!title || !vid) return alert("Заполни поля!");
+
         const { data: { user } } = await supabase.auth.getUser();
 
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { count } = await supabase.from('videos').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).gt('created_at', yesterday);
-        
-        if (count >= 10) return alert("Лимит 10 видео в день!");
+        const { error } = await supabase.from('videos').insert([{ 
+            owner_id: user.id, 
+            title: title, 
+            youtube_url: url, 
+            yt_video_id: vid 
+        }]);
 
-        const { error } = await supabase.from('videos').insert([{ owner_id: user.id, title, youtube_url: url, yt_video_id: vid }]);
-        if (error) alert("Ошибка: " + error.message); else location.reload();
+        if (error) alert("Ошибка: " + error.message);
+        else location.reload();
     }
 
-    // ЛЕНТА И ПОИСК
+    // ЛЕНТА
     async function loadFeed() {
-        const { data: vids, error } = await supabase.from('videos').select('*, profiles(*)').order('created_at', {ascending: false});
-        if (error) return;
-        allVideos = vids;
+        const { data, error } = await supabase.from('videos').select('*, profiles(*)').order('created_at', {ascending: false});
+        if (error) {
+            console.error(error);
+            return;
+        }
+        allVideos = data;
         render(allVideos);
     }
 
@@ -154,10 +146,10 @@
                 <div class="video-card" onclick="location.href='watch.html?v=${v.id}'">
                     <div class="thumb"><img src="https://img.youtube.com/vi/${v.yt_video_id}/mqdefault.jpg"></div>
                     <div class="v-meta">
-                        <div class="v-avatar" style="background-image:url(${v.profiles?.avatar_url})"></div>
+                        <div class="v-avatar" style="background-image:url(${v.profiles?.avatar_url || ''})"></div>
                         <div>
                             <h3 style="margin:0; font-size:14px;">${v.title}</h3>
-                            <p style="margin:5px 0 0; font-size:12px; color:#888;">${v.profiles?.display_name}</p>
+                            <p style="margin:5px 0 0; font-size:12px; color:#888;">${v.profiles?.display_name || 'User'}</p>
                         </div>
                     </div>
                 </div>`;
@@ -169,10 +161,26 @@
         render(allVideos.filter(v => v.title.toLowerCase().includes(q)));
     }
 
+    // ПРОВЕРКА ЮЗЕРА ПРИ ЗАГРУЗКЕ
+    window.onload = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            let { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if (!profile) {
+                const nick = 'user' + Math.floor(Math.random()*999);
+                await supabase.from('profiles').insert([{ id: user.id, username: nick, display_name: nick }]);
+                return location.reload();
+            }
+            document.getElementById('auth-box').innerHTML = `
+                <button class="btn-upload" onclick="openModal('upload-modal')">+ ЗАГРУЗИТЬ</button>
+                <div class="v-avatar" style="background-image:url(${profile.avatar_url}); cursor:pointer" onclick="location.href='channel.html?u=${profile.username}'"></div>
+            `;
+        }
+        loadFeed();
+    };
+
+    // Закрытие модалок
     window.onclick = (e) => { if(e.target.className === 'modal') e.target.style.display='none'; }
-    
-    checkUser();
-    loadFeed();
 </script>
 </body>
 </html>
